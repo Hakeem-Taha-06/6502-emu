@@ -15,7 +15,7 @@ A MOS 6502 CPU emulator with an integrated debugging environment built in C++ 17
 ---
 ## Debug UI
 Uses ImGui Docking version to render several debugging/control windows including:
-- **Control:** for loading a raw binary file, changing emulation speed, offsetting the default color pallete *(looks cool)* and controlling the execution of the emulator by single-stepping or specifying a number of cycles to execute or executing until the program counter reaches a certain address.  
+- **Control:** for loading a raw binary file, changing emulation speed, offsetting the default color palette *(looks cool)* and controlling the execution of the emulator by single-stepping or specifying a number of cycles to execute or executing until the program counter reaches a certain address.  
 - **Memory:** a live memory viewer which highlights the program counter with yellow and has the ability to follow it during execution. highlights the stack pointer with cyan. can jump to specific addresses.
 - **CPU:** live display of the cpu registers and status flags.
 - **Disassembly:** shows the disassembled portion of a chunk of memory, by default follows the program counter, can navigate with `<` / `>` or enter an address to jump to
@@ -51,9 +51,10 @@ build on windows by running GenerateProjects.bat to generate the visual studio s
 
 ---
 ## Known limitations
-- some stuff are hardcoded (the chunk of memory where the display screen reads from at `0x0200-0x05FF`, the input is recorded at 0x00FF, program starts at 0x), these where the values that the test rom used, but they should be configurable for different programs.
+- some stuff are hardcoded (the chunk of memory where the display screen reads from at `0x0200-0x05FF`, the input is recorded at 0x00FF, program starts at 0x0600), these were the values that the test rom used, but they should be configurable for different programs.
 - disassambler is kinda wonky if it starts from the middle of an instruction, it doesn't really distinguish when an instruction starts/ends.
 - Decimal mode is completely unimplemented.
+- no linux support :p
 - overall this is a very early version so a lot of things are bound to change.
 
 ---
