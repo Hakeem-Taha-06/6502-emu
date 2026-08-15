@@ -1,6 +1,8 @@
 # 6502-emu
 A MOS 6502 CPU emulator with an integrated debugging environment built in C++ 17. ImGui-based user interface, GLFW windowing and rendering context and GLAD for OpenGL 3.3 loading.
 
+(most of the code is from another project of mine for an NES Emulator)
+
 ![snake game](preview-screenshots/snake_game.png)
 
 ---
