@@ -6,12 +6,10 @@ Window::Window(int width, int height): WIDTH(width), HEIGHT(height), inputManage
 }
 
 Window::~Window() {
-#ifdef DEBUG
 	// ImGui termination (all debug ui stuff can be moved to a separate ui class)
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
-#endif // DEBUG
 
 	glfwTerminate();
 }
@@ -27,7 +25,7 @@ void Window::init() {
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	float main_scale = ImGui_ImplGlfw_GetContentScaleForMonitor(glfwGetPrimaryMonitor()); // Valid on GLFW 3.3+ only
-	GLFWwindow* w = glfwCreateWindow(WIDTH, HEIGHT, "oNESan", nullptr, nullptr);
+	GLFWwindow* w = glfwCreateWindow(WIDTH, HEIGHT, "MOS 6502 Emulator", nullptr, nullptr);
 	if (w == nullptr) {
 		std::cout << "Failed to create window";
 
@@ -52,8 +50,6 @@ void Window::init() {
 	glViewport(0, 0, WIDTH, HEIGHT);
 
 	glfwSetKeyCallback(w, Window::keyEventCallback);
-	
-#ifdef DEBUG
 
 	// Setup Dear ImGui context (all debug ui stuff can be moved to a separate ui class)
 	IMGUI_CHECKVERSION();
@@ -83,7 +79,7 @@ void Window::init() {
 	// Setup Platform/Renderer backends
 	ImGui_ImplGlfw_InitForOpenGL(w, true);                    // Second param install_callback=true will install GLFW callbacks and chain to existing ones.
 	ImGui_ImplOpenGL3_Init("#version 330");
-#endif // DEBUG
+
 
 	m_window = w;
 
@@ -97,7 +93,6 @@ void Window::render(Emulator& emulator) {
 	glClearColor(0.2f, 0.2f, 0.5f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
-#ifdef DEBUG
 	// IMGUI (all debug ui stuff can be moved to a separate ui class)
 	// Create a dockspace that covers the entire viewport
 	ImGui::DockSpaceOverViewport(ImGui::GetMainViewport()->ID, ImGui::GetMainViewport());
@@ -122,11 +117,10 @@ void Window::render(Emulator& emulator) {
 		ImGui::RenderPlatformWindowsDefault();
 		glfwMakeContextCurrent(backup_current_context);
 	}
-#endif // DEBUG
 }
 
 void Window::renderControlWindow(Emulator& emulator) {
-	ImGui::Begin("Debug Window");
+	ImGui::Begin("Control");
 
 	if (ImGui::InputText("##RomPath", &testRomPath, ImGuiInputTextFlags_EnterReturnsTrue) 
 		||ImGui::Button("Load Test ROM")) {
@@ -346,7 +340,7 @@ void Window::renderDisassemblyWindow(Emulator& emulator) {
 }
 
 void Window::renderGameScreenWindow(Emulator& emulator) {
-	ImGui::Begin("CHRROM");
+	ImGui::Begin("Screen Display");
 
 	std::vector<float> screen(32*32*3);
 	int offset = 0;
@@ -374,18 +368,17 @@ void Window::renderGameScreenWindow(Emulator& emulator) {
 	ImGui::GetWindowDrawList()->AddCallback(ImGui::GetPlatformIO().DrawCallback_SetSamplerLinear, nullptr);
 
 	glBindTexture(GL_TEXTURE_2D, 0);
+	glDeleteTextures(1, &texture);
 	ImGui::End();
 }
 
 void Window::startFrame() {
 	glfwPollEvents();
 
-#ifdef DEBUG
 	// Start the Dear ImGui frame (all debug ui stuff can be moved to a separate ui class)
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
-#endif // DEBUG
 }
 
 void Window::endFrame() {
