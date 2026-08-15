@@ -88,6 +88,8 @@ private:
 
 	int colorShift = 0;
 
+	unsigned int screenTexture = 0;
+
 	void renderControlWindow(Emulator& emulator);
 	void renderCPUWindow(Emulator& emulator);
 	void renderMemoryWindow(Emulator& emulator);

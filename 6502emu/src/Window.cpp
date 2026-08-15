@@ -352,9 +352,10 @@ void Window::renderGameScreenWindow(Emulator& emulator) {
 		screen[i]   = c64_palette[(val+colorShift)%15][2];
 	}
 
-	unsigned int texture;
-	glGenTextures(1, &texture);
-	glBindTexture(GL_TEXTURE_2D, texture);
+	if(screenTexture == 0)
+		glGenTextures(1, &screenTexture);
+
+	glBindTexture(GL_TEXTURE_2D, screenTexture);
 	
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -362,13 +363,12 @@ void Window::renderGameScreenWindow(Emulator& emulator) {
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 32, 32, 0, GL_RGB, GL_FLOAT, screen.data()); 
 
 
-	ImTextureID imTexture = (ImTextureID)(intptr_t)texture;
+	ImTextureID imTexture = (ImTextureID)(intptr_t)screenTexture;
 	ImGui::GetWindowDrawList()->AddCallback(ImGui::GetPlatformIO().DrawCallback_SetSamplerNearest, nullptr);
 	ImGui::Image(imTexture, ImVec2(32*12, 32*12));
 	ImGui::GetWindowDrawList()->AddCallback(ImGui::GetPlatformIO().DrawCallback_SetSamplerLinear, nullptr);
 
 	glBindTexture(GL_TEXTURE_2D, 0);
-	glDeleteTextures(1, &texture);
 	ImGui::End();
 }
 
