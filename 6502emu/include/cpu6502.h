@@ -1,8 +1,3 @@
-/*
-	Don't forget to add OLC's license when setting the repo public, 
-	since a lot of copying will be happening :D
-*/
-
 #pragma once
 #include <cstdint>
 
