@@ -35,6 +35,9 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="dependencies\src\TextEditor.cpp">
+      <Filter>dependencies\src</Filter>
+    </ClCompile>
     <ClCompile Include="dependencies\src\glad.c">
       <Filter>dependencies\src</Filter>
     </ClCompile>

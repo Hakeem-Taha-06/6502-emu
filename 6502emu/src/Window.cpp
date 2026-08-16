@@ -1,7 +1,7 @@
 #include "Window.h"
 #include "Emulator.h"
 
-Window::Window(int width, int height): WIDTH(width), HEIGHT(height), inputManager(){
+Window::Window(int width, int height): WIDTH(width), HEIGHT(height), inputManager(), textEditor(){
 	init();
 }
 
@@ -80,7 +80,6 @@ void Window::init() {
 	ImGui_ImplGlfw_InitForOpenGL(w, true);                    // Second param install_callback=true will install GLFW callbacks and chain to existing ones.
 	ImGui_ImplOpenGL3_Init("#version 330");
 
-
 	m_window = w;
 
 }
@@ -106,6 +105,7 @@ void Window::render(Emulator& emulator) {
 
 	renderDisassemblyWindow(emulator);
 	renderGameScreenWindow(emulator);
+	renderTextEditorWindow(emulator);
 
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -122,8 +122,9 @@ void Window::render(Emulator& emulator) {
 void Window::renderControlWindow(Emulator& emulator) {
 	ImGui::Begin("Control");
 
-	if (ImGui::InputText("##RomPath", &testRomPath, ImGuiInputTextFlags_EnterReturnsTrue) 
-		||ImGui::Button("Load Test ROM")) {
+	ImGui::InputText("##RomPath", &testRomPath); 
+	ImGui::SameLine();
+	if(ImGui::Button("Load Test ROM")) {
 		try {
 			emulator.load(testRomPath);
 		}
@@ -137,7 +138,7 @@ void Window::renderControlWindow(Emulator& emulator) {
 	}
 
 	ImGui::PushItemWidth(200.0f);
-	ImGui::InputInt("##testClocks", &testClocks);
+	ImGui::InputInt("##testClocks", &testClocks); 
 	ImGui::SameLine();
 	if(ImGui::Button("Clock # Times")) {
 		
@@ -378,6 +379,36 @@ void Window::renderGameScreenWindow(Emulator& emulator) {
 	ImGui::End();
 }
 
+void Window::renderTextEditorWindow(Emulator& emulator) {
+	ImGui::Begin("Assembly Editor");
+	ImGui::InputText("##assemblycodepath", &assemblyCodePath);
+	ImGui::SameLine();
+	if (ImGui::Button("Load assembly code")) {
+		try {
+			assemblyCode = readFile(assemblyCodePath);
+		}
+		catch(std::exception e){
+			std::cerr << "Error Loading File { " << assemblyCodePath << " } : " << e.what() << std::endl;
+		}
+		textEditor.SetText(assemblyCode);
+	}
+	if (ImGui::Button("Assemble")) {
+		std::ofstream("prg.asm") << textEditor.GetText();
+		const char* cmd = "vasm6502_oldstyle.exe -Fbin -o prg.bin -L prg.lst prg.asm 2> stderr.txt";
+		executeTerminalCommand(cmd);
+		std::cout << readFile("stderr.txt") << std::endl;
+		emulator.load("prg.bin");
+		emulator.reset();
+		std::filesystem::remove("prg.asm");
+		std::filesystem::remove("prg.bin");
+		std::filesystem::remove("prg.lst");
+		std::filesystem::remove("stderr.txt");
+	}
+
+	textEditor.Render("Assembly Editor");
+	ImGui::End();
+}
+
 void Window::startFrame() {
 	glfwPollEvents();
 
@@ -430,3 +461,17 @@ void Window::processInput(Emulator& emulator) {
 		screenStartAddr-= screenWidth;
 	}
 }	
+
+std::string Window::readFile(std::string path) {
+	std::ifstream file(path);
+	
+	if (!file)
+		throw std::runtime_error("File not open");
+
+	std::string contents{ std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() };
+	return contents;
+}
+
+void Window::executeTerminalCommand(const char* cmd){
+	int result = std::system(cmd);
+}

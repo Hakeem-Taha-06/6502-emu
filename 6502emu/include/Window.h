@@ -7,10 +7,13 @@
 #include <imgui/imgui_impl_glfw.h>
 #include <imgui/imgui_impl_opengl3.h>
 #include <imgui/imgui_stdlib.h>
+#include <imgui/TextEditor.h>
 
 #include <iostream>
-#include <map>
-#include <algorithm>
+#include <map>         // disassembly lookup
+#include <algorithm>  
+#include <cstdlib>     // std::system
+#include <filesystem>  // std::filesystem
 
 #include "InputManager.h"
 
@@ -64,6 +67,7 @@ public:
 	}
 private:
 	GLFWwindow* m_window;
+	TextEditor textEditor;
 	InputManager inputManager;
 	WindowContext context;
 
@@ -91,16 +95,24 @@ private:
 	uint16_t screenStartAddr = 0x0200;
 	int screenWidth = 32;
 	int screenHeight = 32;
-	int displayScale = 12;
+	int displayScale = 13;
 	int colorShift = 0;
+
+	// Assembly Editor
+	std::string assemblyCodePath = "src/gamesrc/snake.asm";
+	std::string assemblyCode = "";
 
 	void renderControlWindow(Emulator& emulator);
 	void renderCPUWindow(Emulator& emulator);
 	void renderMemoryWindow(Emulator& emulator);
 	void renderDisassemblyWindow(Emulator& emulator);
 	void renderGameScreenWindow(Emulator& emulator);
+	void renderTextEditorWindow(Emulator& emulator);
 
 	static void keyEventCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 	void processInput(Emulator& emulator);
+
+	std::string readFile(std::string path);
+	void executeTerminalCommand(const char* command);
 };
 

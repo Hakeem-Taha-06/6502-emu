@@ -112,6 +112,7 @@
     <ClInclude Include="include\cpu6502.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="dependencies\src\TextEditor.cpp" />
     <ClCompile Include="dependencies\src\glad.c" />
     <ClCompile Include="dependencies\src\imgui.cpp" />
     <ClCompile Include="dependencies\src\imgui_demo.cpp" />

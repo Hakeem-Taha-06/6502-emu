@@ -68,7 +68,7 @@
 ;31 |                                                          |
 ;32 |                                                          |
 ;   ------------------------------------------------------------
-
+*= $0600
   jsr init ;jump to subroutine init
   jsr loop ;jump to subroutine loop
 
