@@ -86,9 +86,13 @@ private:
 	std::map<uint16_t, std::string> disassemblyLines;
 	int disassemblyDisplaySize = 20;
 
-	int colorShift = 0;
-
+	// Screen Display
 	unsigned int screenTexture = 0;
+	uint16_t screenStartAddr = 0x0200;
+	int screenWidth = 32;
+	int screenHeight = 32;
+	int displayScale = 12;
+	int colorShift = 0;
 
 	void renderControlWindow(Emulator& emulator);
 	void renderCPUWindow(Emulator& emulator);

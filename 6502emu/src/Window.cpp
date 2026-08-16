@@ -136,6 +136,7 @@ void Window::renderControlWindow(Emulator& emulator) {
 		emulator.clock();
 	}
 
+	ImGui::PushItemWidth(200.0f);
 	ImGui::InputInt("##testClocks", &testClocks);
 	ImGui::SameLine();
 	if(ImGui::Button("Clock # Times")) {
@@ -157,7 +158,13 @@ void Window::renderControlWindow(Emulator& emulator) {
 	ImGui::InputInt("Emulation Speed", &emulator.emulationSpeed);
 
 	ImGui::InputInt("Shift Palette", &colorShift);
+	ImGui::InputScalar("Display Start Address", ImGuiDataType_U16, &screenStartAddr, 0, 0, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
+	ImGui::InputInt("##width", &screenWidth);
+	ImGui::SameLine();
+	ImGui::InputInt("Screen W/H", &screenHeight);
+	ImGui::InputInt("Display Scale", &displayScale);
 
+	ImGui::PopItemWidth();
 	ImGui::End();
 }
 
@@ -342,10 +349,10 @@ void Window::renderDisassemblyWindow(Emulator& emulator) {
 void Window::renderGameScreenWindow(Emulator& emulator) {
 	ImGui::Begin("Screen Display");
 
-	std::vector<float> screen(32*32*3);
+	std::vector<float> screen(screenWidth*screenHeight*3);
 	int offset = 0;
-	for (int i = 0; i < 32 * 32 * 3; ++i) {
-		uint8_t val = emulator.bus.cpuRead(0x0200 + offset);
+	for (int i = 0; i < screenWidth * screenHeight * 3; ++i) {
+		uint8_t val = emulator.bus.cpuRead(screenStartAddr + offset);
 		offset++;
 		screen[i++] = c64_palette[(val+colorShift)%15][0];
 		screen[i++] = c64_palette[(val+colorShift)%15][1];
@@ -360,12 +367,11 @@ void Window::renderGameScreenWindow(Emulator& emulator) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 32, 32, 0, GL_RGB, GL_FLOAT, screen.data()); 
-
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, screenWidth, screenHeight, 0, GL_RGB, GL_FLOAT, screen.data());
 
 	ImTextureID imTexture = (ImTextureID)(intptr_t)screenTexture;
 	ImGui::GetWindowDrawList()->AddCallback(ImGui::GetPlatformIO().DrawCallback_SetSamplerNearest, nullptr);
-	ImGui::Image(imTexture, ImVec2(32*12, 32*12));
+	ImGui::Image(imTexture, ImVec2(screenWidth * displayScale, screenHeight * displayScale));
 	ImGui::GetWindowDrawList()->AddCallback(ImGui::GetPlatformIO().DrawCallback_SetSamplerLinear, nullptr);
 
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -416,5 +422,11 @@ void Window::processInput(Emulator& emulator) {
 	}
 	if (ctx->input->isKeyPressed(GLFW_KEY_A)) {
 		emulator.bus.cpuWrite(0x00FF, 0x61);
+	}
+	if (ctx->input->isKeyPressed(GLFW_KEY_T)) {
+		screenStartAddr += screenWidth;
+	}
+	if (ctx->input->isKeyPressed(GLFW_KEY_Y)) {
+		screenStartAddr-= screenWidth;
 	}
 }	
