@@ -43,11 +43,18 @@ TestBus is meant as an example implementation of the abstract Bus interface, mor
 build on windows by running GenerateProjects.bat to generate the visual studio solution, and build via Visual Studio (windows only)
 
 ## Usage
-- enter the path to a test binary rom.
+You can either: 
+- enter the path to a binary rom.
 - click `Load Test Rom`.
 - step through one cycle at a time or press space to run in continuous mode.
 - there is a test rom bundled in src/gamesrc/snake.bin which is a snake game written in 6502 assembly found [here](https://gist.github.com/wkjagt/9043907#file-snake6502-asm).
 - play the test game using WASD.
+
+OR:
+- write or load an .asm file into the text editor ([imgui extension by pthom](https://github.com/pthom/ImGuiColorTextEdit/tree/imgui_bundle))
+- click `Assemble` to assemble via vasm and load resulting binary into memory (currently locked at an offset of 0x0600, will fix very soon)
+- you can now either debug as usual, or watch as the whole program crashes when an assembler error occurs cuz it is unhandled \:D (will also fix soon)
+
 
 ---
 ## Known limitations
@@ -60,8 +67,8 @@ build on windows by running GenerateProjects.bat to generate the visual studio s
 ---
 ## Future to-do stuffs
 
-- hooking in an external assembler for built in 6502 assembly code editing/writing and testing.
-- configurable controls and I/O registers and display screen memory chunk (so you can build your own interactive programs with easy display \:D).
+- ~~hooking in an external assembler for built in 6502 assembly code editing/writing and testing~~. (done)
+- configurable controls and I/O registers and ~~display screen memory chunk~~ (done) (so you can build your own interactive programs with easy display \:D).
 - save/load state
 
 ---
