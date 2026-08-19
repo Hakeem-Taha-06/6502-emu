@@ -122,6 +122,7 @@ void Window::render(Emulator& emulator) {
 void Window::renderControlWindow(Emulator& emulator) {
 	ImGui::Begin("Control");
 
+	ImGui::InputScalar("Write Address", ImGuiDataType_U16, &romWriteAddr, 0, 0, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
 	ImGui::InputText("##RomPath", &testRomPath); 
 	ImGui::SameLine();
 	if(ImGui::Button("Load binary ROM")) {
