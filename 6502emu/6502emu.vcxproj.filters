@@ -65,6 +65,9 @@
     <ClCompile Include="dependencies\src\imgui_widgets.cpp">
       <Filter>dependencies\src</Filter>
     </ClCompile>
+    <ClCompile Include="dependencies\src\tinyfiledialogs.c">
+      <Filter>dependencies\src</Filter>
+    </ClCompile>
     <ClCompile Include="src\Application.cpp">
       <Filter>src</Filter>
     </ClCompile>

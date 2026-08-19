@@ -12,10 +12,7 @@ void Emulator::reset(){
 	bus.reset();
 }
 
-
-void Emulator::load(std::string path) {
-
-
+void Emulator::load(std::string path, uint16_t writeAddr) {
 	std::ifstream file( path, std::ios::binary | std::ios::ate);
 	if (!file)
 		throw std::runtime_error("Couldn't read file: "+path);
@@ -28,12 +25,16 @@ void Emulator::load(std::string path) {
 		throw std::runtime_error("Failed to read file: " + path);
 		
 	for (int i = 0; i < size; ++i)
-		bus.cpuWrite(0x0600 + (uint16_t)i, buffer[i]); 
+		bus.cpuWrite(writeAddr + (uint16_t)i, buffer[i]); 
 	
 	// reset vector
-	bus.cpuWrite(0xFFFC, 0x00);
-	bus.cpuWrite(0xFFFD, 0x06);
+	bus.cpuWrite(0xFFFC, writeAddr & 0x00FF);
+	bus.cpuWrite(0xFFFD, (writeAddr & 0xFF00)>>8);
 	reset();
+}
+
+void Emulator::clearMem() {
+	bus.clearMem();
 }
 
 void Emulator::clock() {

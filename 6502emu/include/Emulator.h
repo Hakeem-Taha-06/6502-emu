@@ -16,7 +16,8 @@ public:
 
 	void reset();
 	void clock();
-	void load(std::string path);
+	void load(std::string path, uint16_t writeAddr);
+	void clearMem();
 
 	TestBus bus;
 	

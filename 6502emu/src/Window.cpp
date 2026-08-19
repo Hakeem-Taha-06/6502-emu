@@ -1,7 +1,7 @@
 #include "Window.h"
 #include "Emulator.h"
 
-Window::Window(int width, int height): WIDTH(width), HEIGHT(height), inputManager(), textEditor(){
+Window::Window(int width, int height): WIDTH(width), HEIGHT(height), inputManager(), assemblyEditor(){
 	init();
 }
 
@@ -44,8 +44,8 @@ void Window::init() {
 		exit(EXIT_FAILURE);
 	}
 
-	std::cout << "GPU: " << glGetString(GL_RENDERER) << std::endl;
-	std::cout << "GL Version: " << glGetString(GL_VERSION) << std::endl;
+	std::cout << "GPU: " << glGetString(GL_RENDERER) << '\n';
+	std::cout << "GL Version: " << glGetString(GL_VERSION) << '\n';
 
 	glViewport(0, 0, WIDTH, HEIGHT);
 
@@ -124,12 +124,12 @@ void Window::renderControlWindow(Emulator& emulator) {
 
 	ImGui::InputText("##RomPath", &testRomPath); 
 	ImGui::SameLine();
-	if(ImGui::Button("Load Test ROM")) {
+	if(ImGui::Button("Load binary ROM")) {
 		try {
-			emulator.load(testRomPath);
+			emulator.load(testRomPath, romWriteAddr);
 		}
 		catch (std::exception e) {
-			std::cerr << e.what() << std::endl;
+			std::cerr << e.what() << '\n';
 		}
 	}
 
@@ -163,7 +163,10 @@ void Window::renderControlWindow(Emulator& emulator) {
 	ImGui::InputInt("##width", &screenWidth);
 	ImGui::SameLine();
 	ImGui::InputInt("Screen W/H", &screenHeight);
-	ImGui::InputInt("Display Scale", &displayScale);
+	ImGui::InputInt("Display Scale", &screenScale);
+	if (ImGui::Button("Clear Memory")) {
+		emulator.clearMem();
+	}
 
 	ImGui::PopItemWidth();
 	ImGui::End();
@@ -295,24 +298,24 @@ void Window::renderDisassemblyWindow(Emulator& emulator) {
 	ImGui::Checkbox("Follow PC", &disassemblerFollowPC);
 	ImGui::SameLine();
 	if (ImGui::Button("<")) {
-		currentAddr--;
+		disassemblerCurrentAddr--;
 		disassemblerFollowPC = false;
 	}
 	ImGui::SameLine();
 	if (ImGui::Button(">")) {
-		currentAddr++;
+		disassemblerCurrentAddr++;
 		disassemblerFollowPC = false;
 	}
 
-	if (ImGui::InputScalar("##disassembleraddr", ImGuiDataType_U16, &currentAddr, 0, 0, "%04X", ImGuiInputTextFlags_CharsHexadecimal)) {
+	if (ImGui::InputScalar("##disassembleraddr", ImGuiDataType_U16, &disassemblerCurrentAddr, 0, 0, "%04X", ImGuiInputTextFlags_CharsHexadecimal)) {
 		disassemblerFollowPC = false;
 	}
 
-	if (disassemblerFollowPC) currentAddr = emulator.bus.cpu.pc;
+	if (disassemblerFollowPC) disassemblerCurrentAddr = emulator.bus.cpu.pc;
 
 
-	uint16_t startAddr = currentAddr;
-	uint16_t endAddr = currentAddr + disassemblyDisplaySize;
+	uint16_t startAddr = disassemblerCurrentAddr;
+	uint16_t endAddr = disassemblerCurrentAddr + disassemblyDisplaySize;
 
 	disassemblyLines = emulator.bus.cpu.disassemble(startAddr, endAddr);
 
@@ -372,7 +375,7 @@ void Window::renderGameScreenWindow(Emulator& emulator) {
 
 	ImTextureID imTexture = (ImTextureID)(intptr_t)screenTexture;
 	ImGui::GetWindowDrawList()->AddCallback(ImGui::GetPlatformIO().DrawCallback_SetSamplerNearest, nullptr);
-	ImGui::Image(imTexture, ImVec2(screenWidth * displayScale, screenHeight * displayScale));
+	ImGui::Image(imTexture, ImVec2(screenWidth * screenScale, screenHeight * screenScale));
 	ImGui::GetWindowDrawList()->AddCallback(ImGui::GetPlatformIO().DrawCallback_SetSamplerLinear, nullptr);
 
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -381,31 +384,89 @@ void Window::renderGameScreenWindow(Emulator& emulator) {
 
 void Window::renderTextEditorWindow(Emulator& emulator) {
 	ImGui::Begin("Assembly Editor");
+
+	// Binary File Management
 	ImGui::InputText("##assemblycodepath", &assemblyCodePath);
+	ImGui::SameLine();
+	ImGui::PushID(0);
+	if (ImGui::Button("Browse")) {
+		const char* filterPatters[1] = { "*.asm" };
+		const char* path = tinyfd_openFileDialog(
+			"Choose .bin File",
+			"",
+			1,
+			filterPatters,
+			".asm",
+			0
+		);
+		assemblyCodePath = path;
+	}
+	ImGui::PopID();
 	ImGui::SameLine();
 	if (ImGui::Button("Load assembly code")) {
 		try {
 			assemblyCode = readFile(assemblyCodePath);
+			assemblyEditor.SetText(assemblyCode);
 		}
 		catch(std::exception e){
-			std::cerr << "Error Loading File { " << assemblyCodePath << " } : " << e.what() << std::endl;
+			std::cerr << "Error Loading File { " << assemblyCodePath << " } : " << e.what() << '\n';
 		}
-		textEditor.SetText(assemblyCode);
-	}
-	if (ImGui::Button("Assemble")) {
-		std::ofstream("prg.asm") << textEditor.GetText();
-		const char* cmd = "vasm6502_oldstyle.exe -Fbin -o prg.bin -L prg.lst prg.asm 2> stderr.txt";
-		executeTerminalCommand(cmd);
-		std::cout << readFile("stderr.txt") << std::endl;
-		emulator.load("prg.bin");
-		emulator.reset();
-		std::filesystem::remove("prg.asm");
-		std::filesystem::remove("prg.bin");
-		std::filesystem::remove("prg.lst");
-		std::filesystem::remove("stderr.txt");
 	}
 
-	textEditor.Render("Assembly Editor");
+	// Write Offset
+	ImGui::InputScalar("Write Address", ImGuiDataType_U16, &assemblerWriteAddr, 0, 0, "%04X", ImGuiInputTextFlags_CharsHexadecimal);
+
+	// Assembler Management
+	ImGui::InputText("##assemblerpath", &assemblerPath);
+	ImGui::SameLine();
+	ImGui::PushID(1);
+	if (ImGui::Button("Browse")) {
+		const char* filterPatters[1] = { "*.exe" };
+		const char* path = tinyfd_openFileDialog(
+			"Choose Assembler Executable",
+			"",
+			1,
+			filterPatters,
+			".exe",
+			0
+		);
+		assemblerPath = path;
+	}
+	ImGui::PopID();
+
+	ImGui::SameLine();
+	if (ImGui::Button("Assemble")) {
+		std::ofstream("prg.asm") << assemblyEditor.GetText();
+
+		std::string cmd;
+		switch (assembler) {
+			//case Assembler::CA65:
+			//	cmd = "";
+			//	break;
+			
+			case Assembler::VASM:
+			default: // VASM
+				cmd = "\"" + assemblerPath + "\" -Fbin -o prg.bin -L prg.lst prg.asm 2> stderr.txt";
+		}
+		
+		try{
+			executeTerminalCommand(cmd.c_str()); 
+			std::cout << readFile("stderr.txt") << '\n';
+			emulator.load("prg.bin", assemblerWriteAddr);
+			std::cout << "Successfully Assembled and Loaded Program" << '\n';
+		}
+		catch(std::exception e){
+			std::cerr << e.what() << '\n';
+		}
+
+		emulator.reset();
+		removeFile("prg.asm");
+		removeFile("prg.bin");
+		removeFile("prg.lst");
+		removeFile("stderr.txt");
+	}
+
+	assemblyEditor.Render("Assembly Editor");
 	ImGui::End();
 }
 
@@ -423,24 +484,34 @@ void Window::endFrame() {
 }
 
 void Window::keyEventCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-	auto context = static_cast<WindowContext*>(glfwGetWindowUserPointer(window));
+
+	ImGuiIO& io = ImGui::GetIO();
+	if (io.WantTextInput) 
+		return;
+	
+
+	auto ctx = static_cast<WindowContext*>(glfwGetWindowUserPointer(window));
 	
 	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-		if (context->emulationMode == EmulationMode::Manual)
-			context->emulationMode = EmulationMode::Automatic;
-		else if (context->emulationMode == EmulationMode::Automatic)
-			context->emulationMode = EmulationMode::Manual;
+		if (ctx->emulationMode == EmulationMode::Manual)
+			ctx->emulationMode = EmulationMode::Automatic;
+		else if (ctx->emulationMode == EmulationMode::Automatic)
+			ctx->emulationMode = EmulationMode::Manual;
 	}
 	
 	if (action == GLFW_PRESS) {
-		context->input->setKeyState(key, true);
+		ctx->input->setKeyState(key, true);
 	}
 	else if (action == GLFW_RELEASE) {
-		context->input->setKeyState(key, false);
+		ctx->input->setKeyState(key, false);
 	}
 }
 
 void Window::processInput(Emulator& emulator) {
+	ImGuiIO& io = ImGui::GetIO();
+	if (io.WantTextInput)
+		return;
+
 	auto ctx = (WindowContext*)glfwGetWindowUserPointer(m_window);
 	if (ctx->input->isKeyPressed(GLFW_KEY_W)) {
 		emulator.bus.cpuWrite(0x00FF, 0x77);
@@ -472,6 +543,28 @@ std::string Window::readFile(std::string path) {
 	return contents;
 }
 
+void Window::removeFile(std::string fileName) {
+	try {
+		if (std::filesystem::remove(fileName)) {
+			std::cout << "File '" << fileName << "'" << " Removed Successfully" << '\n';
+		}
+		else {
+			std::cout << "File '" << fileName << "'" << " not Found" << '\n';
+		}
+	}
+	catch (std::exception e) {
+		std::cerr << "Error Deleting File '" << fileName << "'" << '\n';
+	}
+}
+
 void Window::executeTerminalCommand(const char* cmd){
 	int result = std::system(cmd);
+
+	if (result != 0) {
+		std::string error = "Command {";
+		error += cmd;
+		error += "} Failed Execution With Exit Code ";
+		error += result;
+		throw std::runtime_error(error);
+	}
 }

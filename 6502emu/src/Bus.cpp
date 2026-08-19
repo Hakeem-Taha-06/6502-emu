@@ -29,3 +29,7 @@ void TestBus::clock() {
 void TestBus::reset() {
 	cpu.reset();
 }
+
+void TestBus::clearMem() {
+	ram.fill(0x00);
+}

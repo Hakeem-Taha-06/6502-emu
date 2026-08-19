@@ -9,6 +9,8 @@
 #include <imgui/imgui_stdlib.h>
 #include <imgui/TextEditor.h>
 
+#include <tinyfiledialogs.h>
+
 #include <iostream>
 #include <map>         // disassembly lookup
 #include <algorithm>  
@@ -44,6 +46,11 @@ enum class EmulationMode {
 	Manual
 };
 
+enum class Assembler {
+	VASM,
+	//CA65
+};
+
 struct WindowContext {
 	InputManager* input = nullptr;
 	EmulationMode emulationMode = EmulationMode::Manual;
@@ -67,7 +74,6 @@ public:
 	}
 private:
 	GLFWwindow* m_window;
-	TextEditor textEditor;
 	InputManager inputManager;
 	WindowContext context;
 
@@ -77,16 +83,19 @@ private:
 
 	std::string testRomPath = "src/gamesrc/snake.bin";
 
+	// Control Window
+	int testClocks = 0;
+	uint16_t romWriteAddr = 0x0600;
+
 	// Memory Viewer
 	bool memoryFollowPC = false;
-	int testClocks = 0;
 	uint16_t targetPC = 0x0000;
 	uint16_t searchAddress = 0x0000;
 	float targetMemoryYScroll = 0.0f;
 
 	// Disassembly Viewer
 	bool disassemblerFollowPC = true;
-	uint16_t currentAddr = 0x0000;
+	uint16_t disassemblerCurrentAddr = 0x0000;
 	std::map<uint16_t, std::string> disassemblyLines;
 	int disassemblyDisplaySize = 20;
 
@@ -95,12 +104,16 @@ private:
 	uint16_t screenStartAddr = 0x0200;
 	int screenWidth = 32;
 	int screenHeight = 32;
-	int displayScale = 13;
+	int screenScale = 13;
 	int colorShift = 0;
 
 	// Assembly Editor
+	TextEditor assemblyEditor;
 	std::string assemblyCodePath = "src/gamesrc/snake.asm";
 	std::string assemblyCode = "";
+	Assembler assembler = Assembler::VASM;
+	uint16_t assemblerWriteAddr = 0x0600;
+	std::string assemblerPath = "vasm6502_oldstyle.exe";
 
 	void renderControlWindow(Emulator& emulator);
 	void renderCPUWindow(Emulator& emulator);
@@ -113,6 +126,7 @@ private:
 	void processInput(Emulator& emulator);
 
 	std::string readFile(std::string path);
+	void removeFile(std::string path);
 	void executeTerminalCommand(const char* command);
 };
 

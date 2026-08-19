@@ -29,6 +29,7 @@ public:
 
 	void clock() override;
 	void reset() override;
+	void clearMem();
 
 	inline const uint8_t* getRam()const { return ram.data(); }
 
