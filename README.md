@@ -1,5 +1,5 @@
 # 6502-emu
-A MOS 6502 CPU emulator with an integrated debugging environment built in C++ 17. ImGui-based user interface, GLFW windowing and rendering context and GLAD for OpenGL 3.3 loading.
+A MOS 6502 CPU emulator with an integrated debugging environment and a built in code editor built in C++ 17. ImGui-based user interface, GLFW windowing and rendering context and GLAD for OpenGL 3.3 loading.
 
 (most of the code is from another project of mine for an NES Emulator)
 
@@ -11,6 +11,9 @@ A MOS 6502 CPU emulator with an integrated debugging environment built in C++ 17
 - Step through emulation one clock cycle at a time or run in continuous mode with configurable speed.
 - View the memory via the live memory viewer or the live pixel display.
 - Fully implemented 56 official opcodes across 13 addressing modes and cycle-accurate.
+- Write 6502 Assembly code.
+- Assemble and load into memory for quick testing.
+- Choose your own assembler (currently only supports vasm).
 
 ---
 ## Debug UI
@@ -19,8 +22,7 @@ Uses ImGui Docking version to render several debugging/control windows including
 - **Memory:** a live memory viewer which highlights the program counter with yellow and has the ability to follow it during execution. highlights the stack pointer with cyan. can jump to specific addresses.
 - **CPU:** live display of the cpu registers and status flags.
 - **Disassembly:** shows the disassembled portion of a chunk of memory, by default follows the program counter, can navigate with `<` / `>` or enter an address to jump to
-- **Screen Display:** reads a specific portion of memory and interprets it as indices to the default palette, can be used for displaying a screen. (right now its hardcoded to a certain memory chunk `0x0200-0x05FF` for the snake game tho )
-
+- **Screen Display:** reads a specific portion of memory and interprets it as indices to the default palette, can be used for displaying a screen.
 ---
 ## Architecture
 ---
@@ -52,13 +54,13 @@ You can either:
 
 OR:
 - write or load an .asm file into the text editor ([imgui extension by pthom](https://github.com/pthom/ImGuiColorTextEdit/tree/imgui_bundle))
-- click `Assemble` to assemble via vasm and load resulting binary into memory (currently locked at an offset of 0x0600, will fix very soon)
-- you can now either debug as usual, or watch as the whole program crashes when an assembler error occurs cuz it is unhandled \:D (will also fix soon)
+- click `Assemble` to assemble via vasm and load resulting binary into memory.
+- you can now debug as usual by stepping or running.
 
 
 ---
 ## Known limitations
-- some stuff are hardcoded (the chunk of memory where the display screen reads from at `0x0200-0x05FF`, the input is recorded at 0x00FF, program starts at 0x0600), these were the values that the test rom used, but they should be configurable for different programs.
+- some stuff are hardcoded (the input is recorded at 0x00FF), these were the values that the test rom used, but they should be configurable for different programs.
 - disassambler is kinda wonky if it starts from the middle of an instruction, it doesn't really distinguish when an instruction starts/ends.
 - Decimal mode is completely unimplemented.
 - no linux support :p
@@ -74,7 +76,10 @@ OR:
 ---
 # Acknowledgements
 - Thanks so much to OneLoneCoder's (javidx9) [NES emulator tutorial series](https://youtube.com/playlist?list=PLrOv9FMX8xJHqMvSGB_9G9nZZ_4IgteYf), the cpu6502 class is HEAVILY inspired by [his implementation](https://github.com/OneLoneCoder/olcNES). 
-- License for javidx9's code can be found in [OLC-3 LICENSE](https://github.com/OneLoneCoder/olcNES/blob/master/README.md)
+- License for javidx9's code can be found in [OLC-3 LICENSE](https://github.com/OneLoneCoder/olcNES/blob/master/README.md).
 - The rom for the snake game can be found [here](https://gist.github.com/wkjagt/9043907#file-snake6502-asm).
+- ImGui main repository [here](https://github.com/ocornut/imgui).
+- ImGui extension used for assembly editor [here](https://github.com/pthom/ImGuiColorTextEdit).
+- File dialog uses [tinyfiledialog](https://sourceforge.net/projects/tinyfiledialogs/).
 
 
