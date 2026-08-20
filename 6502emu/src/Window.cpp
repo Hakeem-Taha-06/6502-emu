@@ -1,7 +1,7 @@
 #include "Window.h"
 #include "Emulator.h"
 
-Window::Window(int width, int height): WIDTH(width), HEIGHT(height), inputManager(), assemblyEditor(){
+Window::Window(int width, int height): WIDTH(width), HEIGHT(height), inputManager(), assemblyEditor(), errorDisplay(){
 	init();
 }
 
@@ -80,6 +80,15 @@ void Window::init() {
 	ImGui_ImplGlfw_InitForOpenGL(w, true);                    // Second param install_callback=true will install GLFW callbacks and chain to existing ones.
 	ImGui_ImplOpenGL3_Init("#version 330");
 
+	// Assembly Code Editor
+	assemblyLang = setupAssemblyLanguage();
+	assemblyEditor.SetLanguage(&assemblyLang);
+
+	// Error Display
+	errorDisplay.SetReadOnlyEnabled(true);
+	errorDisplay.SetShowLineNumbersEnabled(false);
+	errorDisplay.SetWordWrapEnabled(true);
+
 	m_window = w;
 
 }
@@ -106,6 +115,7 @@ void Window::render(Emulator& emulator) {
 	renderDisassemblyWindow(emulator);
 	renderGameScreenWindow(emulator);
 	renderTextEditorWindow(emulator);
+	renderErrorWindow(emulator);
 
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -376,7 +386,7 @@ void Window::renderGameScreenWindow(Emulator& emulator) {
 
 	ImTextureID imTexture = (ImTextureID)(intptr_t)screenTexture;
 	ImGui::GetWindowDrawList()->AddCallback(ImGui::GetPlatformIO().DrawCallback_SetSamplerNearest, nullptr);
-	ImGui::Image(imTexture, ImVec2(screenWidth * screenScale, screenHeight * screenScale));
+	ImGui::Image(imTexture, ImVec2((float)(screenWidth * screenScale), (float)(screenHeight * screenScale)));
 	ImGui::GetWindowDrawList()->AddCallback(ImGui::GetPlatformIO().DrawCallback_SetSamplerLinear, nullptr);
 
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -400,7 +410,8 @@ void Window::renderTextEditorWindow(Emulator& emulator) {
 			".asm",
 			0
 		);
-		assemblyCodePath = path;
+		if(path)
+			assemblyCodePath = path;
 	}
 	ImGui::PopID();
 	ImGui::SameLine();
@@ -431,7 +442,8 @@ void Window::renderTextEditorWindow(Emulator& emulator) {
 			".exe",
 			0
 		);
-		assemblerPath = path;
+		if(path)
+			assemblerPath = path;
 	}
 	ImGui::PopID();
 
@@ -452,12 +464,14 @@ void Window::renderTextEditorWindow(Emulator& emulator) {
 		
 		try{
 			executeTerminalCommand(cmd.c_str()); 
-			std::cout << readFile("stderr.txt") << '\n';
 			emulator.load("prg.bin", assemblerWriteAddr);
 			std::cout << "Successfully Assembled and Loaded Program" << '\n';
+			errorDisplay.SetText("Success");
 		}
 		catch(std::exception e){
 			std::cerr << e.what() << '\n';
+			if (std::filesystem::exists("stderr.txt"))
+				errorDisplay.SetText(readFile("stderr.txt"));
 		}
 
 		emulator.reset();
@@ -468,6 +482,13 @@ void Window::renderTextEditorWindow(Emulator& emulator) {
 	}
 
 	assemblyEditor.Render("Assembly Editor");
+	ImGui::End();
+}
+
+void Window::renderErrorWindow(Emulator& emulator) {
+	ImGui::Begin("Errors");
+
+	errorDisplay.Render("Errors");
 	ImGui::End();
 }
 
@@ -568,4 +589,12 @@ void Window::executeTerminalCommand(const char* cmd){
 		error += result;
 		throw std::runtime_error(error);
 	}
+}
+
+TextEditor::Language Window::setupAssemblyLanguage() {
+	TextEditor::Language assemblyLang;
+
+	assemblyLang.singleLineComment = ";";
+
+	return assemblyLang;
 }

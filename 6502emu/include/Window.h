@@ -114,6 +114,10 @@ private:
 	Assembler assembler = Assembler::VASM;
 	uint16_t assemblerWriteAddr = 0x0600;
 	std::string assemblerPath = "vasm6502_oldstyle.exe";
+	TextEditor::Language assemblyLang;
+
+	// Error Display
+	TextEditor errorDisplay;
 
 	void renderControlWindow(Emulator& emulator);
 	void renderCPUWindow(Emulator& emulator);
@@ -121,6 +125,7 @@ private:
 	void renderDisassemblyWindow(Emulator& emulator);
 	void renderGameScreenWindow(Emulator& emulator);
 	void renderTextEditorWindow(Emulator& emulator);
+	void renderErrorWindow(Emulator& emulator);
 
 	static void keyEventCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 	void processInput(Emulator& emulator);
@@ -128,5 +133,6 @@ private:
 	std::string readFile(std::string path);
 	void removeFile(std::string path);
 	void executeTerminalCommand(const char* command);
+	TextEditor::Language setupAssemblyLanguage();
 };
 
